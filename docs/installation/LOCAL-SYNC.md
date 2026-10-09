@@ -63,3 +63,32 @@ The eleven local Python scripts and `teos.ps1` in `~/.cursor/trigenys-engineerin
 - Confirm the Cursor Skills catalog and subagents after restarting an Agent session; check that each TEOS Skill appears once per name. On Cursor 3.21.16 the agent-visible Skill list showed one entry per name, but the winning copy was not predictable; the Skills UI check is tracked in [#7](https://github.com/Trigenys/trigenys-engineering-os/issues/7). The list of a running window is not refreshed when folders are removed: reload the window first.
 - Confirm actual subagent model execution in the agent run details, rather than trusting YAML alone.
 - Validate cross-tool adapters separately in Cursor, Claude Code and Codex. Their profile/state is not shared.
+
+
+## Migration de l'adaptateur d'index TEOS (distincte des 44 Skills)
+
+Le rapport Cursor du 2026-10-09 après rechargement indique : 44 Skills découvertes (une seule entrée chacune), RAIDER conforme, 31 tests de l'installateur réussis, `compare-local --strict` à 107 identiques ; l'adaptateur local `trigenys-engineering-os` pointe cependant encore vers un ancien répertoire vide. Cette observation est **rapportée par le client Cursor**, pas reproduite par GitHub CI. La découverte effective des 19 agents et l'application de leurs modèles restent **NOT VERIFIED**.
+
+Un adaptateur canonique est désormais versionné dans `adapters/trigenys-engineering-os/SKILL.md`. Il résout les autres Skills **comme dossiers frères dans la racine de Skills du même outil**, sans chemin utilisateur codé en dur et sans ajouter une 45e Skill au catalogue de spécialités.
+
+Vérification **lecture seule** depuis le clone TEOS à jour sur Windows :
+
+```powershell
+python scripts/install.py check
+python scripts/install.py compare-local --strict
+python scripts/install.py compare-adapter
+python scripts/install.py install-adapter --dry-run --update
+```
+
+Après **approbation de la modification locale**, remplacement ciblé des seuls adaptateurs TEOS :
+
+```powershell
+python scripts/install.py install-adapter --update
+python scripts/install.py compare-adapter --strict
+```
+
+Le script sauvegarde les contenus antérieurs sous `~/.teos-backups/<UTC stamp>/`. Il ne retire ni les 44 Skills spécialisées ni les Skills personnelles, agents, règles ou scripts locaux. **Ne pas installer une troisième copie avec `--tools cursor` sur ce même profil** : cela risquerait de multiplier les racines actives. Pour les Cloud Agents, valider un environnement isolé avant d'y répliquer les Skills.
+
+À suivre après redémarrage : ouvrir une **nouvelle conversation Cursor Agent** pour vérifier l'adaptateur, puis consulter la liste des sous-agents via l'interface Cursor si elle est disponible. Un outil de sous-agent générique qui n'accepte que les rôles intégrés **ne prouve pas** que les profils personnalisés sont absents ; noter `NOT VERIFIED` jusqu'à un test par un point d'entrée réellement supporté.
+
+La version exacte des deux adaptateurs locaux initiaux n'a pas été fournie dans GitHub : la version canonique est un **remplacement auditable**, pas une reproduction octet pour octet. Examiner les sauvegardes pour toute règle personnalisée avant l'archivage.
