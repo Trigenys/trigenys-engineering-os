@@ -114,6 +114,14 @@ class CompareLocalTest(TempHome):
         self.assertTrue((agents / "senior-project-manager.md").is_file())
         self.assertTrue(legacy_skill.is_dir())
 
+    def test_deviation_count_drives_strict_mode(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertGreater(install.compare_local(ALL_TOOLS), 0)
+            install.install_global(False, False, ALL_TOOLS)
+            self.assertEqual(install.compare_local(ALL_TOOLS), 0)
+            (self.home / ".cursor" / "agents" / "ux-ui-cx-strategist.md").write_text("old", encoding="utf-8")
+            self.assertEqual(install.compare_local(ALL_TOOLS), 1)
+
 
 class InitProjectTest(TempHome):
     def test_project_skills_use_minimal_roots_and_backups_stay_out_of_repo(self) -> None:

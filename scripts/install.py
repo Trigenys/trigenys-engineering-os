@@ -9,6 +9,8 @@ import shutil
 import sys
 from pathlib import Path
 
+import teos_checks
+
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS = ROOT / "skills"
 CURSOR_AGENTS = ROOT / ".cursor" / "agents"
@@ -60,35 +62,35 @@ def parse_tools(value: str) -> set[str]:
             f"--tools expects a comma-separated subset of {','.join(TOOLS)}")
     return tools
 
+def walkthrough_keys() -> list[str]:
+    return teos_checks.required_keys(ROOT / "docs" / "walkthrough" / "TEMPLATE.md")
+
+
+def validate_project(directory: Path) -> int:
+    """Read-only: walkthrough metadata and research notes of a project using TEOS."""
+    target = directory.expanduser().resolve()
+    if not target.is_dir():
+        raise ValueError(f"Not a directory: {target}")
+    problems = (teos_checks.walkthrough_problems(target, walkthrough_keys())
+                + teos_checks.research_problems(target))
+    for problem in problems:
+        print("FAIL:", problem)
+    print(f"Project validation {'FAILED' if problems else 'PASSED'}: {target} (no files modified)")
+    return 1 if problems else 0
+
+
 def check() -> int:
     problems: list[str] = []
-    names: set[str] = set()
     skill_files = sorted(SKILLS.glob("*/SKILL.md"))
     agent_files = sorted(CURSOR_AGENTS.glob("*.md"))
     for f in skill_files:
-        text = f.read_text(encoding="utf-8")
-        if not text.startswith("---\n") or "\n---\n" not in text[4:]:
-            problems.append(f"{f}: frontmatter absent")
-            continue
-        frontmatter = text.split("---", 2)[1]
-        expected_name = f.parent.name
-        if f"name: {expected_name}" not in frontmatter:
-            problems.append(f"{f}: name incorrect")
-        if expected_name in names:
-            problems.append(f"{f}: nom dupliqué")
-        names.add(expected_name)
-        if "description:" not in frontmatter:
-            problems.append(f"{f}: description manquante")
+        problems.extend(teos_checks.skill_problems(f))
     for f in agent_files:
-        text = f.read_text(encoding="utf-8")
-        if not text.startswith("---\n") or "\n---\n" not in text[4:]:
-            problems.append(f"{f}: frontmatter absent")
-            continue
-        frontmatter = text.split("---", 2)[1]
-        for field in ("name:", "description:", "model:", "readonly:"):
-            if field not in frontmatter:
-                problems.append(f"{f}: {field} manquant")
+        problems.extend(teos_checks.agent_problems(f))
     raider_path = ROOT / "docs" / "raider" / "RAIDER.md"
+    problems.extend(teos_checks.raider_provenance_problems(raider_path))
+    problems.extend(teos_checks.walkthrough_problems(ROOT, walkthrough_keys()))
+    problems.extend(teos_checks.research_problems(ROOT))
     if raider_path.is_file():
         raider = raider_path.read_text(encoding="utf-8")
         for principle in ("## R — Reusable", "## A — Agnostic", "## I — Idempotent",
@@ -149,8 +151,11 @@ def global_operations(tools: set[str]) -> list[tuple[Path, Path]]:
     return ops
 
 
-def compare_local(tools: set[str]) -> None:
-    """Read-only compare against existing installations; no secrets are read out."""
+def compare_local(tools: set[str]) -> int:
+    """Read-only compare against existing installations; no secrets are read out.
+
+    Returns the number of entries that differ from the expected installed state.
+    """
     home = Path.home()
     stats = {"SAME": 0, "MISSING": 0, "DIFFERENT": 0}
     for src, dst in global_operations(tools):
@@ -195,6 +200,7 @@ def compare_local(tools: set[str]) -> None:
     print(f"Comparison: {stats['SAME']} same, {stats['MISSING']} missing, "
           f"{stats['DIFFERENT']} different, {redundant} redundant, "
           f"{superseded} superseded. No files modified.")
+    return stats["MISSING"] + stats["DIFFERENT"] + redundant + superseded
 
 
 def backup_path(dst: Path, stamp: str) -> Path:
@@ -273,6 +279,10 @@ def main() -> int:
                   "Skills go to the fewest roots those tools read.")
     compare = commands.add_parser("compare-local")
     compare.add_argument("--tools", type=parse_tools, default=set(TOOLS), help=tools_help)
+    compare.add_argument("--strict", action="store_true",
+                         help="Exit 1 unless 0 missing, different, redundant and superseded")
+    project = commands.add_parser("validate-project")
+    project.add_argument("--path", type=Path, required=True)
     for mode in ("install-global", "init-project"):
         p = commands.add_parser(mode)
         p.add_argument("--dry-run", action="store_true")
@@ -285,9 +295,11 @@ def main() -> int:
     if args.command == "check":
         return check()
     if args.command == "compare-local":
-        compare_local(args.tools)
-        return 0
+        deviations = compare_local(args.tools)
+        return 1 if args.strict and deviations else 0
     try:
+        if args.command == "validate-project":
+            return validate_project(args.path)
         if args.command == "install-global":
             install_global(args.dry_run, args.update, args.tools)
         elif args.command == "init-project":
