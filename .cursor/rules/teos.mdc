@@ -1,0 +1,6 @@
+---
+description: Apply Trigenys Engineering OS policy, RAIDER and multi-agent coordination for nontrivial engineering tasks.
+alwaysApply: true
+---
+
+Follow `AGENTS.md`, `docs/raider/RAIDER.md` and `docs/agent-coordination/protocol.md`. Use the matching expertise in `skills/<specialty>/SKILL.md` when relevant. Favor direct execution for trivial changes and economical Composer for standard work; reserve reasoning-heavy models and independent premium reviews for justified problems. Model routing via subagents is advisory and actual execution must be verified. For significant product/architecture/UX/security decisions, research live standards and market evidence when browsing is available. Write a unique task-specific `docs/walkthrough/` file for nontrivial work and validate applicable static/unit/integration/API/contract/E2E gates. Do not overwrite concurrent agents' files or perform destructive/paid/production changes without approval.
