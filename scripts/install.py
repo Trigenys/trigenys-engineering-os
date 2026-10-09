@@ -55,8 +55,8 @@ def check() -> int:
         for problem in problems:
             print("FAIL:", problem)
         return 1
-    if len(skill_files) != 26 or len(agent_files) != 15:
-        print("WARN: expected 26 skills and 15 agents; inspect pending files")
+    if len(skill_files) != 42 or len(agent_files) != 18:
+        print("WARN: expected 42 skills and 18 agents; inspect pending files")
         return 1
     print("Static configuration check PASSED")
     print("Runtime model availability, online research and agent routing NOT VERIFIED")
