@@ -8,6 +8,7 @@
 
 - `skills/` — **44 canonical reusable Agent Skills**: product, PMO, business analysis, architecture, DevOps, DevSecOps, UX/CX, testing, security, GitHub Actions, OIDC, delivery, Cloudflare, AWS, backup/recovery, releases and research.
 - `.cursor/agents/` — **19 specialist profiles** for Cursor with model routing hints. Model availability and configuration must be validated in the installed Cursor version.
+- `adapters/trigenys-engineering-os/` — separately versioned **index Skill** (not counted among the 44 specialists). It discovers current Skills in the active tool's own Skill root; no hard-coded legacy paths.
 - `AGENTS.md` and `CLAUDE.md` — small, compatible entry points for Codex, Claude Code, and other coding agents.
 - `docs/` — RAIDER contract, collaboration protocol, walkthroughs, research and quality gates.
 - `scripts/install.py` — safe local installation and project bootstrap. Never auto-overwrites an existing configuration.
@@ -33,6 +34,20 @@ python scripts/install.py init-project --path /path/to/my-repo
 ```
 
 Read-only verification: `compare-local --strict` exits 1 unless the installation matches the repository (0 missing, different, redundant and superseded). `validate-project --path /path/to/my-repo` checks walkthrough metadata against `docs/walkthrough/TEMPLATE.md` and that research notes cite a URL and a check date. `check` applies the same rules to this repository, plus the [Agent Skills](https://agentskills.io/specification) naming rules and the pinned RAIDER provenance.
+
+### Upgrade an existing TEOS index adapter (opt-in)
+
+The pre-repository local adapter may still target an empty or obsolete folder. **Do not overwrite it as part of the regular 44-Skill installation.** From an up-to-date TEOS clone:
+
+```powershell
+python scripts/install.py compare-adapter
+python scripts/install.py install-adapter --dry-run --update
+# After reviewing the diff and agreeing to replace the old adapter:
+python scripts/install.py install-adapter --update
+python scripts/install.py compare-adapter --strict
+```
+
+The adapter is installed as one **separately named index Skill per selected tool root** (default `.claude/skills` and `.agents/skills`; `--tools cursor` alone chooses `.cursor/skills`). The installer backs up changed adapters under `~/.teos-backups/<UTC stamp>/`, outside all discovery roots. A new Cursor session is required to re-evaluate Skill content. **Do not combine `--tools cursor` with the default multi-tool install on the same profile** without verifying duplicate resolution and Cloud Agent needs.
 
 The installer only copies files; it does **not** connect to cloud accounts, deploy, commit, install dependencies, or configure account-level paid usage. Unchanged content is a no-op; differing existing paths are reported but preserved unless you explicitly use `--update`, which first moves them to `~/.teos-backups/<UTC-stamp>/` (never inside a skill folder, where Cursor and Claude Code would load the backup as a Skill).
 
