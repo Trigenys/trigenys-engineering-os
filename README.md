@@ -6,8 +6,8 @@
 
 ## What lives here
 
-- `skills/` — canonical reusable Agent Skills: product, PMO, business analysis, software architecture, DevOps, DevSecOps, UX/CX, test engineering, research, multi-agent collaboration, cost-aware routing.
-- `.cursor/agents/` — Cursor specialist profiles with model routing hints. Model availability and configuration must be validated in the installed Cursor version.
+- `skills/` — **42 canonical reusable Agent Skills**: product, PMO, business analysis, architecture, DevOps, DevSecOps, UX/CX, testing, security, GitHub Actions, OIDC, delivery, Cloudflare, AWS, backup/recovery, releases and research.
+- `.cursor/agents/` — **18 specialist profiles** for Cursor with model routing hints. Model availability and configuration must be validated in the installed Cursor version.
 - `AGENTS.md` and `CLAUDE.md` — small, compatible entry points for Codex, Claude Code, and other coding agents.
 - `docs/` — RAIDER contract, collaboration protocol, walkthroughs, research and quality gates.
 - `scripts/install.py` — safe local installation and project bootstrap. Never auto-overwrites an existing configuration.
@@ -50,4 +50,4 @@ Do not assume that Cursor, Claude Code and Codex share live state or model selec
 
 The repository was bootstrapped from AppFactory's generic `typescript-api` **service** preset because AppFactory currently has no dedicated `skills/toolkit` preset. The generated Node HTTP skeleton is a bootstrap artifact, **not** a deployed TEOS service. Use `npm run check` only if validating that scaffold; TEOS itself is file-based. A dedicated AppFactory toolkit preset is a follow-up improvement.
 
-See `docs/agent-coordination/protocol.md`, `docs/quality/QUALITY-GATES.md`, and `docs/research/SOURCES.md`.
+See `docs/agent-coordination/protocol.md`, `docs/quality/QUALITY-GATES.md`, `docs/research/SOURCES.md`, [`docs/skills/CI-SKILLS-MAP.md`](docs/skills/CI-SKILLS-MAP.md) and the public-source cross-repo audit [`docs/audits/2026-10-09-ci-workflow-audit.md`](docs/audits/2026-10-09-ci-workflow-audit.md).
