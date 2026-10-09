@@ -58,4 +58,4 @@
 
 Added 16 task-specific Skills and 3 dedicated review-oriented Cursor agents; see [CI Skill map](../skills/CI-SKILLS-MAP.md). These instructions do **not** change workflows or infrastructure in any inspected product repository. Use PRs and documented test gates to adopt recommended improvements selectively.
 
-Formal RAIDER stage naming is still PENDING authoritative source. See [RAIDER contract](../raider/RAIDER.md).
+The formal RAIDER acronym and Definition of Done have now been verified against [the canonical Project Registry RAIDER standard](https://github.com/EagleFox31/project-registry/blob/main/RAIDER.md), Git blob `db1b349e129c8f147f91551ba79f6c1799481756`, mirrored in [RAIDER contract](../raider/RAIDER.md).

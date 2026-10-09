@@ -2,17 +2,17 @@
 
 **RAIDER-governed engineering skills and multi-agent collaboration toolkit** for Cursor, Claude Code and OpenAI Codex.
 
-> Created through [Trigenys AppFactory](https://github.com/Trigenys/appfactory). Private repository. No production infrastructure is required for this toolkit.
+> Created through [Trigenys AppFactory](https://github.com/Trigenys/appfactory). Public repository. No production infrastructure is required for this toolkit.
 
 ## What lives here
 
-- `skills/` — **42 canonical reusable Agent Skills**: product, PMO, business analysis, architecture, DevOps, DevSecOps, UX/CX, testing, security, GitHub Actions, OIDC, delivery, Cloudflare, AWS, backup/recovery, releases and research.
+- `skills/` — **44 canonical reusable Agent Skills**: product, PMO, business analysis, architecture, DevOps, DevSecOps, UX/CX, testing, security, GitHub Actions, OIDC, delivery, Cloudflare, AWS, backup/recovery, releases and research.
 - `.cursor/agents/` — **18 specialist profiles** for Cursor with model routing hints. Model availability and configuration must be validated in the installed Cursor version.
 - `AGENTS.md` and `CLAUDE.md` — small, compatible entry points for Codex, Claude Code, and other coding agents.
 - `docs/` — RAIDER contract, collaboration protocol, walkthroughs, research and quality gates.
 - `scripts/install.py` — safe local installation and project bootstrap. Never auto-overwrites an existing configuration.
 
-**RAIDER:** The AppFactory-generated `AGENTS.md` identifies its engineering principles (reusability, configuration, provider independence, idempotency, regression control, least privilege, testability and adoptability). The canonical definition and expansion of the RAIDER acronym have not yet been established in this repository: see `docs/raider/RAIDER.md`. Do not invent it.
+**RAIDER:** The complete [RAIDER Engineering Standard](docs/raider/RAIDER.md) is mirrored from [`EagleFox31/project-registry/RAIDER.md`](https://github.com/EagleFox31/project-registry/blob/main/RAIDER.md) at upstream blob `db1b349e129c8f147f91551ba79f6c1799481756`. RAIDER = **Reusable, Agnostic, Idempotent, Durable / Non-regressive, Engineering-grade, Retroactive**. Its Definition of Done includes failure memory, change-scoped pipelines, reuse-first reconnaissance and brownfield adoption. Keep upstream authoritative.
 
 ## Install
 
@@ -20,6 +20,7 @@ Clone this repository and run locally (Python 3.10+):
 
 ```bash
 python scripts/install.py check
+python scripts/install.py compare-local
 python scripts/install.py install-global --dry-run
 python scripts/install.py install-global
 ```
@@ -31,12 +32,12 @@ python scripts/install.py init-project --path /path/to/my-repo --dry-run
 python scripts/install.py init-project --path /path/to/my-repo
 ```
 
-The installer only copies files; it does **not** connect to cloud accounts, deploy, commit, install dependencies, or configure account-level paid usage. Existing paths are skipped by default. See `--help`.
+The installer only copies files; it does **not** connect to cloud accounts, deploy, commit, install dependencies, or configure account-level paid usage. Unchanged content is a no-op; differing existing paths are reported but preserved unless you explicitly use `--update` (which backs up before replacing). **Compare the local installation made by another agent before updating it**. The existing local `~/.cursor/trigenys-engineering-os/` suite is not modified by this installer. See `docs/installation/LOCAL-SYNC.md` and `--help`.
 
 ## Task workflow
 
 1. Classify the task and select the smallest useful agent set.
-2. Apply canonical RAIDER rules (or mark their unresolved parts `PENDING`).
+2. Apply the canonical RAIDER Definition of Done, documenting justified exceptions.
 3. For significant decisions, research the current market and applicable standards, with dated sources.
 4. Agree on contracts and Git worktree/file ownership before parallel work.
 5. Implement with the lowest-cost competent model.
