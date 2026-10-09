@@ -14,6 +14,7 @@ import teos_checks
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS = ROOT / "skills"
 CURSOR_AGENTS = ROOT / ".cursor" / "agents"
+TEOS_ADAPTER = ROOT / "adapters" / "trigenys-engineering-os"
 DOC_FILES = [
     "docs/raider/RAIDER.md",
     "docs/agent-coordination/protocol.md",
@@ -87,6 +88,14 @@ def check() -> int:
         problems.extend(teos_checks.skill_problems(f))
     for f in agent_files:
         problems.extend(teos_checks.agent_problems(f))
+    adapter_file = TEOS_ADAPTER / "SKILL.md"
+    if adapter_file.is_file():
+        problems.extend(teos_checks.skill_problems(adapter_file))
+        adapter_content = adapter_file.read_text(encoding="utf-8")
+        if "SKILL_NOT_FOUND" not in adapter_content:
+            problems.append("TEOS adapter lacks a missing-Skill failure path")
+    else:
+        problems.append("Missing canonical TEOS adapter")
     raider_path = ROOT / "docs" / "raider" / "RAIDER.md"
     problems.extend(teos_checks.raider_provenance_problems(raider_path))
     problems.extend(teos_checks.walkthrough_problems(ROOT, walkthrough_keys()))
@@ -140,6 +149,36 @@ def canonical_skills() -> list[Path]:
 def skill_operations(base: Path, tools: set[str]) -> list[tuple[Path, Path]]:
     return [(skill, base / prefix / "skills" / skill.name)
             for skill in canonical_skills() for prefix in skill_prefixes(tools)]
+
+
+def adapter_operations(base: Path, tools: set[str]) -> list[tuple[Path, Path]]:
+    """An opt-in, separately versioned index Skill; not one of the 44 specialists."""
+    return [(TEOS_ADAPTER, base / prefix / "skills" / "trigenys-engineering-os")
+            for prefix in skill_prefixes(tools)]
+
+
+def compare_adapter(tools: set[str]) -> int:
+    """Report adapter divergence without changing local installations."""
+    deviations = 0
+    for src, dst in adapter_operations(Path.home(), tools):
+        if not dst.exists():
+            status = "MISSING"
+        elif _content_digest(src) == _content_digest(dst):
+            status = "SAME"
+        else:
+            status = "DIFFERENT"
+        if status != "SAME":
+            deviations += 1
+        print(f"{status} {dst}")
+    print(f"Adapter comparison: {deviations} deviations; no files modified.")
+    return deviations
+
+
+def install_adapter(dry_run: bool, update: bool, tools: set[str]) -> None:
+    """Install only the versioned TEOS index Skill; never touch personal Skills."""
+    stamp = run_stamp()
+    for src, dst in adapter_operations(Path.home(), tools):
+        print(copy_safely(src, dst, dry_run, update, stamp))
 
 
 def global_operations(tools: set[str]) -> list[tuple[Path, Path]]:
@@ -281,9 +320,14 @@ def main() -> int:
     compare.add_argument("--tools", type=parse_tools, default=set(TOOLS), help=tools_help)
     compare.add_argument("--strict", action="store_true",
                          help="Exit 1 unless 0 missing, different, redundant and superseded")
+    comp_adapter = commands.add_parser("compare-adapter")
+    comp_adapter.add_argument("--tools", type=parse_tools, default=set(TOOLS),
+                              help=tools_help)
+    comp_adapter.add_argument("--strict", action="store_true",
+                              help="Exit 1 unless the current adapter matches the repo")
     project = commands.add_parser("validate-project")
     project.add_argument("--path", type=Path, required=True)
-    for mode in ("install-global", "init-project"):
+    for mode in ("install-global", "init-project", "install-adapter"):
         p = commands.add_parser(mode)
         p.add_argument("--dry-run", action="store_true")
         p.add_argument("--update", action="store_true",
@@ -297,11 +341,16 @@ def main() -> int:
     if args.command == "compare-local":
         deviations = compare_local(args.tools)
         return 1 if args.strict and deviations else 0
+    if args.command == "compare-adapter":
+        deviations = compare_adapter(args.tools)
+        return 1 if args.strict and deviations else 0
     try:
         if args.command == "validate-project":
             return validate_project(args.path)
         if args.command == "install-global":
             install_global(args.dry_run, args.update, args.tools)
+        elif args.command == "install-adapter":
+            install_adapter(args.dry_run, args.update, args.tools)
         elif args.command == "init-project":
             init_project(args.path, args.dry_run, args.update, args.tools)
     except (OSError, ValueError) as exc:
