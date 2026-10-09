@@ -20,6 +20,46 @@ DOC_FILES = [
     "docs/research/SOURCES.md",
 ]
 
+EXPECTED_SKILLS = 44
+EXPECTED_AGENTS = 19
+TOOLS = ("cursor", "claude", "codex")
+BACKUP_DIRNAME = ".teos-backups"
+
+# Profiles renamed upstream; an older local copy keeps loading next to the new one.
+SUPERSEDED_AGENTS = {
+    "devsecops-security-architect.md": "devsecops-architect.md",
+    "senior-project-manager.md": "project-manager.md",
+    "principal-qa-automation-engineer.md": "qa-automation-engineer.md",
+    "ux-ui-cx-strategist.md": "ux-cx-strategist.md",
+}
+
+
+def skill_prefixes(tools: set[str]) -> list[str]:
+    """Smallest set of skill roots covering the selected tools.
+
+    Claude Code reads only .claude/skills and Codex only .agents/skills, while
+    Cursor reads .cursor, .claude and .agents. Installing in every root would make
+    Cursor load each Skill several times.
+    """
+    prefixes: list[str] = []
+    if "claude" in tools:
+        prefixes.append(".claude")
+    if "codex" in tools:
+        prefixes.append(".agents")
+    if "cursor" in tools and not prefixes:
+        # Only ~/.cursor/skills is synced to Cursor Cloud Agents.
+        prefixes.append(".cursor")
+    return prefixes
+
+
+def parse_tools(value: str) -> set[str]:
+    tools = {t.strip() for t in value.split(",") if t.strip()}
+    unknown = tools - set(TOOLS)
+    if not tools or unknown:
+        raise argparse.ArgumentTypeError(
+            f"--tools expects a comma-separated subset of {','.join(TOOLS)}")
+    return tools
+
 def check() -> int:
     problems: list[str] = []
     names: set[str] = set()
@@ -65,8 +105,9 @@ def check() -> int:
         for problem in problems:
             print("FAIL:", problem)
         return 1
-    if len(skill_files) != 44 or len(agent_files) != 18:
-        print("WARN: expected 44 skills and 18 agents; inspect pending files")
+    if len(skill_files) != EXPECTED_SKILLS or len(agent_files) != EXPECTED_AGENTS:
+        print(f"WARN: expected {EXPECTED_SKILLS} skills and {EXPECTED_AGENTS} agents; "
+              "inspect pending files")
         return 1
     print("Static configuration check PASSED")
     print("Runtime model availability, online research and agent routing NOT VERIFIED")
@@ -90,24 +131,29 @@ def _content_digest(path: Path) -> str:
     return h.hexdigest()
 
 
-def global_operations() -> list[tuple[Path, Path]]:
+def canonical_skills() -> list[Path]:
+    return [d for d in sorted(SKILLS.iterdir()) if d.is_dir() and (d / "SKILL.md").is_file()]
+
+
+def skill_operations(base: Path, tools: set[str]) -> list[tuple[Path, Path]]:
+    return [(skill, base / prefix / "skills" / skill.name)
+            for skill in canonical_skills() for prefix in skill_prefixes(tools)]
+
+
+def global_operations(tools: set[str]) -> list[tuple[Path, Path]]:
     home = Path.home()
-    ops: list[tuple[Path, Path]] = []
-    for directory in sorted(SKILLS.iterdir()):
-        if not directory.is_dir() or not (directory / "SKILL.md").is_file():
-            continue
-        for prefix in (".cursor", ".claude", ".agents"):
-            ops.append((directory, home / prefix / "skills" / directory.name))
-    for agent in sorted(CURSOR_AGENTS.glob("*.md")):
-        ops.append((agent, home / ".cursor" / "agents" / agent.name))
+    ops = skill_operations(home, tools)
+    if "cursor" in tools:
+        for agent in sorted(CURSOR_AGENTS.glob("*.md")):
+            ops.append((agent, home / ".cursor" / "agents" / agent.name))
     return ops
 
 
-def compare_local() -> None:
+def compare_local(tools: set[str]) -> None:
     """Read-only compare against existing installations; no secrets are read out."""
+    home = Path.home()
     stats = {"SAME": 0, "MISSING": 0, "DIFFERENT": 0}
-    operations = global_operations()
-    for src, dst in operations:
+    for src, dst in global_operations(tools):
         if not dst.exists():
             status = "MISSING"
         elif _content_digest(src) == _content_digest(dst):
@@ -116,27 +162,58 @@ def compare_local() -> None:
             status = "DIFFERENT"
         stats[status] += 1
         print(f"{status} {dst}")
+    known_skills = {skill.name for skill in canonical_skills()}
+    targets = skill_prefixes(tools)
+    redundant = 0
     for prefix in (".cursor", ".claude", ".agents"):
-        folder = Path.home() / prefix / "skills"
-        if folder.is_dir():
-            known = {src.name for src in SKILLS.iterdir() if src.is_dir()}
-            for path in sorted(folder.iterdir()):
-                if path.is_dir() and path.name not in known:
-                    print(f"LOCAL-ONLY (preserve) {path}")
-    folder = Path.home() / ".cursor" / "agents"
+        folder = home / prefix / "skills"
+        if not folder.is_dir():
+            continue
+        for path in sorted(folder.iterdir()):
+            if not path.is_dir():
+                continue
+            if path.name not in known_skills:
+                print(f"LOCAL-ONLY (preserve) {path}")
+            elif prefix not in targets:
+                redundant += 1
+                print(f"REDUNDANT (Cursor also loads it from {', '.join(targets)}; "
+                      f"review, then remove manually) {path}")
+    folder = home / ".cursor" / "agents"
+    superseded = 0
     if folder.is_dir():
         known = {src.name for src in CURSOR_AGENTS.glob("*.md")}
         for path in sorted(folder.glob("*.md")):
-            if path.name not in known:
+            if path.name in SUPERSEDED_AGENTS:
+                superseded += 1
+                print(f"SUPERSEDED by {SUPERSEDED_AGENTS[path.name]} "
+                      f"(review, then remove manually) {path}")
+            elif path.name not in known:
                 print(f"LOCAL-ONLY (preserve) {path}")
-    extra = Path.home() / ".cursor" / "trigenys-engineering-os"
+    extra = home / ".cursor" / "trigenys-engineering-os"
     if extra.exists():
         print(f"LOCAL-ONLY OS framework (not modified) {extra}")
     print(f"Comparison: {stats['SAME']} same, {stats['MISSING']} missing, "
-          f"{stats['DIFFERENT']} different. No files modified.")
+          f"{stats['DIFFERENT']} different, {redundant} redundant, "
+          f"{superseded} superseded. No files modified.")
 
 
-def copy_safely(src: Path, dst: Path, dry_run: bool, update: bool) -> str:
+def backup_path(dst: Path, stamp: str) -> Path:
+    """Backups live outside every skill root: Cursor scans skill roots recursively and
+    Claude Code turns any sibling folder into a skill."""
+    home = Path.home()
+    try:
+        relative = dst.relative_to(home)
+    except ValueError:
+        relative = Path(*dst.parts[1:])
+    candidate = home / BACKUP_DIRNAME / stamp / relative
+    index = 1
+    while candidate.exists():
+        candidate = home / BACKUP_DIRNAME / f"{stamp}-{index}" / relative
+        index += 1
+    return candidate
+
+
+def copy_safely(src: Path, dst: Path, dry_run: bool, update: bool, stamp: str) -> str:
     if not src.exists():
         return f"MISSING {src}"
     if dst.exists() and _content_digest(src) == _content_digest(dst):
@@ -144,15 +221,10 @@ def copy_safely(src: Path, dst: Path, dry_run: bool, update: bool) -> str:
     if dst.exists() and not update:
         return f"DRIFT preserved {dst} (review with compare-local before --update)"
     if dst.exists() and update:
-        stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        backup = dst.with_name(dst.name + ".bak-" + stamp)
-        index = 1
-        while backup.exists():
-            backup = dst.with_name(dst.name + f".bak-{stamp}-{index}")
-            index += 1
+        backup = backup_path(dst, stamp)
         if not dry_run:
             backup.parent.mkdir(parents=True, exist_ok=True)
-            dst.rename(backup)
+            shutil.move(str(dst), str(backup))
         label = f"BACKUP {dst} -> {backup}; "
     else:
         label = ""
@@ -165,12 +237,17 @@ def copy_safely(src: Path, dst: Path, dry_run: bool, update: bool) -> str:
         shutil.copy2(src, dst)
     return label + f"COPIED {src} -> {dst}"
 
-def install_global(dry_run: bool, update: bool) -> None:
-    for src, dst in global_operations():
-        print(copy_safely(src, dst, dry_run, update))
+def run_stamp() -> str:
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def install_global(dry_run: bool, update: bool, tools: set[str]) -> None:
+    stamp = run_stamp()
+    for src, dst in global_operations(tools):
+        print(copy_safely(src, dst, dry_run, update, stamp))
     print("Local user settings were not altered. Cursor model selection still requires verification.")
 
-def init_project(directory: Path, dry_run: bool, update: bool) -> None:
+def init_project(directory: Path, dry_run: bool, update: bool, tools: set[str]) -> None:
     target = directory.expanduser().resolve()
     if not target.is_dir() or not (target / ".git").exists():
         raise ValueError("Choose an existing local Git working tree with --path")
@@ -179,40 +256,42 @@ def init_project(directory: Path, dry_run: bool, update: bool) -> None:
         operations.append((ROOT / fname, target / fname))
     for relative in DOC_FILES:
         operations.append((ROOT / relative, target / relative))
-    for skill in sorted(SKILLS.iterdir()):
-        if not skill.is_dir() or not (skill / "SKILL.md").exists():
-            continue
-        for prefix in (".cursor", ".claude", ".agents"):
-            operations.append((skill, target / prefix / "skills" / skill.name))
-    for agent in sorted(CURSOR_AGENTS.glob("*.md")):
-        operations.append((agent, target / ".cursor" / "agents" / agent.name))
+    operations.extend(skill_operations(target, tools))
+    if "cursor" in tools:
+        for agent in sorted(CURSOR_AGENTS.glob("*.md")):
+            operations.append((agent, target / ".cursor" / "agents" / agent.name))
+    stamp = run_stamp()
     for src, dst in operations:
-        print(copy_safely(src, dst, dry_run, update))
+        print(copy_safely(src, dst, dry_run, update, stamp))
     print("Project bootstrap complete; no cloud calls, Git commits, dependency installs or deployments.")
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("check")
-    commands.add_parser("compare-local")
+    tools_help = ("Comma-separated tools to serve (default: cursor,claude,codex). "
+                  "Skills go to the fewest roots those tools read.")
+    compare = commands.add_parser("compare-local")
+    compare.add_argument("--tools", type=parse_tools, default=set(TOOLS), help=tools_help)
     for mode in ("install-global", "init-project"):
         p = commands.add_parser(mode)
         p.add_argument("--dry-run", action="store_true")
         p.add_argument("--update", action="store_true",
-                       help="Explicitly replace existing paths after timestamped backups")
+                       help=f"Replace differing paths after a backup in ~/{BACKUP_DIRNAME}/")
+        p.add_argument("--tools", type=parse_tools, default=set(TOOLS), help=tools_help)
         if mode == "init-project":
             p.add_argument("--path", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "check":
         return check()
     if args.command == "compare-local":
-        compare_local()
+        compare_local(args.tools)
         return 0
     try:
         if args.command == "install-global":
-            install_global(args.dry_run, args.update)
+            install_global(args.dry_run, args.update, args.tools)
         elif args.command == "init-project":
-            init_project(args.path, args.dry_run, args.update)
+            init_project(args.path, args.dry_run, args.update, args.tools)
     except (OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2

@@ -34,6 +34,8 @@ jobs:
           python-version: "3.12"
       - name: Verify Skill and Cursor agent frontmatters
         run: python scripts/install.py check
+      - name: Installer unit tests
+        run: python -m unittest discover -s scripts -p "test_*.py" -v
       - name: Verify global install dry run
         run: python scripts/install.py install-global --dry-run
       - name: Verify project bootstrap dry run in a clean repo
