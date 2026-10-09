@@ -32,6 +32,8 @@ python scripts/install.py init-project --path /path/to/my-repo --dry-run
 python scripts/install.py init-project --path /path/to/my-repo
 ```
 
+Read-only verification: `compare-local --strict` exits 1 unless the installation matches the repository (0 missing, different, redundant and superseded). `validate-project --path /path/to/my-repo` checks walkthrough metadata against `docs/walkthrough/TEMPLATE.md` and that research notes cite a URL and a check date. `check` applies the same rules to this repository, plus the [Agent Skills](https://agentskills.io/specification) naming rules and the pinned RAIDER provenance.
+
 The installer only copies files; it does **not** connect to cloud accounts, deploy, commit, install dependencies, or configure account-level paid usage. Unchanged content is a no-op; differing existing paths are reported but preserved unless you explicitly use `--update`, which first moves them to `~/.teos-backups/<UTC-stamp>/` (never inside a skill folder, where Cursor and Claude Code would load the backup as a Skill).
 
 Skills go to the fewest folders the selected tools read (`--tools`, default `cursor,claude,codex`): Claude Code reads only `.claude/skills`, Codex only `.agents/skills`, and Cursor reads both plus `.cursor/skills`. The default therefore installs in `.claude/skills` and `.agents/skills`, not in all three. `--tools cursor` alone uses `.cursor/skills`, the only folder Cursor syncs to Cloud Agents. Cursor agent profiles are installed only when `cursor` is selected. **Compare the local installation made by another agent before updating it**. The existing local `~/.cursor/trigenys-engineering-os/` suite is not modified by this installer. See `docs/installation/LOCAL-SYNC.md` and `--help`.

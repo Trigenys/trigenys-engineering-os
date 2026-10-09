@@ -44,7 +44,7 @@ Only after reviewing the report:
 ```powershell
 py scripts/install.py install-global --dry-run --update
 py scripts/install.py install-global --update
-py scripts/install.py compare-local
+py scripts/install.py compare-local --strict
 ```
 
 - Identical content is an idempotent no-op.
@@ -56,10 +56,10 @@ py scripts/install.py compare-local
 
 ## Local-only additions
 
-The eight local Python scripts and `teos.ps1` in `~/.cursor/trigenys-engineering-os/` overlap with `scripts/install.py` (healthcheck, Skill validation, bootstrap) and were **not** imported. Once the repository install is in place they can be archived. Anything worth keeping should arrive by PR with tests.
+The eleven local Python scripts and `teos.ps1` in `~/.cursor/trigenys-engineering-os/scripts/` were audited in [`docs/audits/2026-10-09-local-scripts-audit.md`](../audits/2026-10-09-local-scripts-audit.md). Their useful checks now live in `scripts/teos_checks.py`, with tests; the rest is superseded. Keep them until the audit is accepted, then archive them rather than delete.
 
 ## Acceptance checks
 
-- Confirm the Cursor Skills catalog and subagents after restarting an Agent session; check that each TEOS Skill appears once per name (Cursor's handling of the same Skill in `.claude/skills` and `.agents/skills` is **not verified**).
+- Confirm the Cursor Skills catalog and subagents after restarting an Agent session; check that each TEOS Skill appears once per name. On Cursor 3.21.16 the agent-visible Skill list showed one entry per name, but the winning copy was not predictable; the Skills UI check is tracked in [#7](https://github.com/Trigenys/trigenys-engineering-os/issues/7). The list of a running window is not refreshed when folders are removed: reload the window first.
 - Confirm actual subagent model execution in the agent run details, rather than trusting YAML alone.
 - Validate cross-tool adapters separately in Cursor, Claude Code and Codex. Their profile/state is not shared.
