@@ -1,0 +1,44 @@
+name: TEOS Skills CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills/**"
+      - ".cursor/agents/**"
+      - "scripts/**"
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      - "docs/**"
+      - ".github/workflows/skills-ci.yml"
+  pull_request:
+    paths:
+      - "skills/**"
+      - ".cursor/agents/**"
+      - "scripts/**"
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      - "docs/**"
+      - ".github/workflows/skills-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify Skill and Cursor agent frontmatters
+        run: python scripts/install.py check
+      - name: Verify global install dry run
+        run: python scripts/install.py install-global --dry-run
+      - name: Verify project bootstrap dry run in a clean repo
+        run: |
+          tmpdir="$(mktemp -d)"
+          git -C "$tmpdir" init -q
+          python scripts/install.py init-project --path "$tmpdir" --dry-run
+          test ! -e "$tmpdir/AGENTS.md"
