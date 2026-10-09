@@ -17,4 +17,6 @@ This repository follows Trigenys RAIDER engineering principles: reusable, config
 - Keep transport/persistence/provider adapters behind explicit boundaries.
 - Treat `docs/engineering/lessons-learned.md` as a risk reference when present.
 - See `docs/quality/QUALITY-GATES.md` for test gates.
+- For GitHub Actions, OIDC, deployment, backup or packaging work load matching Skills from `docs/skills/CI-SKILLS-MAP.md`; do not duplicate existing AppFactory reusable workflows.
+- CI green, artifact published, deployed and production-smoke passed are separate claims requiring separate evidence.
 - Cursor routing is advisory; subagent model IDs must be checked locally.
