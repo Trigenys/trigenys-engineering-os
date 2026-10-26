@@ -1,4 +1,44 @@
-# Trigenys Engineering OS (TEOS)
+<!-- appfactory:hero:start -->
+<div align="center">
+
+# Trigenys Engineering OS
+
+### Reusable engineering skills, governed by RAIDER.
+
+**A file-based toolkit for agent skills, safe installation and collaboration across Cursor, Claude Code and Codex.**
+
+[![Lifecycle: toolkit](https://img.shields.io/badge/Lifecycle-toolkit-0969da)](#implementation-status)
+[![Engineering: RAIDER](https://img.shields.io/badge/Engineering-RAIDER-263238)](#engineering-boundary)
+
+[**Overview**](#what-it-does) · [**Maturity**](#implementation-status) · [**Install**](#install) · [**Skills**](#what-lives-here) · [**Workflow**](#task-workflow) · [**Trust**](#engineering-boundary) · [**RAIDER**](docs/raider/RAIDER.md)
+
+</div>
+
+---
+<!-- appfactory:hero:end -->
+
+## What it does
+
+A maintainer selects an installation scope, dry-runs the skill and adapter install, reviews any differences, then adopts canonical RAIDER rules without overwriting local customizations.
+
+## Implementation status
+
+**prototype.** No cross-vendor live model orchestration, cloud provisioning or deployed TEOS API is provided; generated Node server is an AppFactory scaffold only.
+
+**Implementation evidence:** [Skill inventory](skills/) · [Safe installer](scripts/install.py) · [RAIDER standard](docs/raider/RAIDER.md).
+
+## Engineering boundary
+
+TEOS is **not** a hosted agent platform. Installation copies vetted Skill files to selected local roots; it cannot share live state between Cursor, Claude Code and Codex, deploy workloads or approve destructive operations. The [canonical RAIDER mirror](docs/raider/RAIDER.md) is synchronized from upstream, not independently reauthored here. See [installer source](scripts/install.py) and [local sync guidance](docs/installation/LOCAL-SYNC.md).
+
+## Skill discovery path
+
+```text
+RAIDER upstream → TEOS skill inventory → index adapter → chosen local tool roots
+                                              └→ Git-owned coordination notes
+```
+
+The adapter is an additional index, **not** another one of the 44 canonical Skills. Review dry-run output and preserve any existing local configuration unless explicitly updated.
 
 **RAIDER-governed engineering skills and multi-agent collaboration toolkit** for Cursor, Claude Code and OpenAI Codex.
 

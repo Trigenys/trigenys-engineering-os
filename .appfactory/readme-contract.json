@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "name": "Trigenys Engineering OS",
+  "stage": "prototype",
+  "tagline": "A file-based toolkit for agent skills, safe installation and collaboration across Cursor, Claude Code and Codex.",
+  "problem": "Engineering workflows drift when separate agents copy prompts, overwrite existing skill folders and silently assume common runtime state.",
+  "scenario": "A maintainer selects an installation scope, dry-runs the skill and adapter install, reviews any differences, then adopts canonical RAIDER rules without overwriting local customizations.",
+  "differentiation": "44 specialist skills, agent profiles and a separate index adapter are delivered as transparent versioned files; the installer is dry-run-first and preserves differences unless updates are explicitly allowed.",
+  "architecture": "Canonical RAIDER standard -> skill inventory + adapter index -> local install checker -> selected tool roots (.claude, .agents, .cursor) -> tracked Git coordination and proof-of-done.",
+  "limitations": "No cross-vendor live model orchestration, cloud provisioning or deployed TEOS API is provided; generated Node server is an AppFactory scaffold only.",
+  "capabilities": [
+    {
+      "name": "Skill inventory",
+      "status": "shipped",
+      "description": "Source-backed implementation and documentation: skill inventory.",
+      "evidence": "docs/skills/CI-SKILLS-MAP.md"
+    },
+    {
+      "name": "Safe installer",
+      "status": "shipped",
+      "description": "Source-backed implementation and documentation: safe installer.",
+      "evidence": "scripts/install.py"
+    },
+    {
+      "name": "RAIDER standard",
+      "status": "shipped",
+      "description": "Source-backed implementation and documentation: raider standard.",
+      "evidence": "docs/raider/RAIDER.md"
+    }
+  ],
+  "roadmap": [
+    {
+      "name": "Toolkit installation regression",
+      "exitCriteria": "Verify idempotent dry-run and strict compare on each supported tool root."
+    },
+    {
+      "name": "AppFactory toolkit preset",
+      "exitCriteria": "Create and audit a dedicated toolkit provisioning path instead of inheriting API-service defaults."
+    }
+  ],
+  "references": [
+    {
+      "name": "AppFactory README contract",
+      "url": "https://github.com/Trigenys/appfactory/blob/main/docs/product-readme-contract.md",
+      "relevance": "Central immutable product README audit without duplicating its renderer."
+    }
+  ],
+  "requiredHeadings": [
+    "What it does",
+    "Implementation status",
+    "Engineering boundary"
+  ],
+  "requiredTerms": [
+    "RAIDER",
+    "Cursor",
+    "Claude",
+    "Codex",
+    "Skills",
+    "toolkit"
+  ],
+  "requiredFiles": [
+    "scripts/install.py",
+    "docs/raider/RAIDER.md",
+    "docs/installation/LOCAL-SYNC.md",
+    "adapters/trigenys-engineering-os/"
+  ],
+  "presentation": {
+    "variant": "centered",
+    "headline": "Reusable engineering skills, governed by RAIDER.",
+    "summary": "A file-based toolkit for agent skills, safe installation and collaboration across Cursor, Claude Code and Codex.",
+    "badges": [
+      {
+        "label": "Lifecycle",
+        "value": "toolkit",
+        "color": "0969da",
+        "href": "#implementation-status"
+      },
+      {
+        "label": "Engineering",
+        "value": "RAIDER",
+        "color": "263238",
+        "href": "#engineering-boundary"
+      }
+    ],
+    "navigation": [
+      {
+        "label": "Overview",
+        "href": "#what-it-does"
+      },
+      {
+        "label": "Maturity",
+        "href": "#implementation-status"
+      },
+      {
+        "label": "Install",
+        "href": "#install"
+      },
+      {
+        "label": "Skills",
+        "href": "#what-lives-here"
+      },
+      {
+        "label": "Workflow",
+        "href": "#task-workflow"
+      },
+      {
+        "label": "Trust",
+        "href": "#engineering-boundary"
+      },
+      {
+        "label": "RAIDER",
+        "href": "docs/raider/RAIDER.md"
+      }
+    ]
+  }
+}
