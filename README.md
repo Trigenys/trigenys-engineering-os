@@ -23,7 +23,7 @@ A maintainer selects an installation scope, dry-runs the skill and adapter insta
 
 ## Implementation status
 
-**toolkit.** No cross-vendor live model orchestration, cloud provisioning or deployed TEOS API is provided; generated Node server is an AppFactory scaffold only.
+**prototype.** No cross-vendor live model orchestration, cloud provisioning or deployed TEOS API is provided; generated Node server is an AppFactory scaffold only.
 
 **Implementation evidence:** [Skill inventory](skills/) · [Safe installer](scripts/install.py) · [RAIDER standard](docs/raider/RAIDER.md).
 
