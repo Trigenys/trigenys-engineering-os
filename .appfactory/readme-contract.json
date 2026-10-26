@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "name": "Trigenys Engineering OS",
-  "stage": "toolkit",
+  "stage": "prototype",
   "tagline": "A file-based toolkit for agent skills, safe installation and collaboration across Cursor, Claude Code and Codex.",
   "problem": "Engineering workflows drift when separate agents copy prompts, overwrite existing skill folders and silently assume common runtime state.",
   "scenario": "A maintainer selects an installation scope, dry-runs the skill and adapter install, reviews any differences, then adopts canonical RAIDER rules without overwriting local customizations.",
@@ -13,7 +13,7 @@
       "name": "Skill inventory",
       "status": "shipped",
       "description": "Source-backed implementation and documentation: skill inventory.",
-      "evidence": "skills/"
+      "evidence": "docs/skills/CI-SKILLS-MAP.md"
     },
     {
       "name": "Safe installer",
